@@ -1,0 +1,150 @@
+1、定义：保证一个类仅有一个实例，并提供一个访问它的全局访问点
+2、实现一个单例模式 —— 用一个变量来标识当前是否已经为某个类创建过对象，
+如果是，则在下一次获取该类的实例时，直接返回之前创建的对象
+
+不透明的单例模式
+var Singleton = function (name) {
+  this.name = name;
+  this.instance = null;
+}
+
+Singleton.prototype.getName = function () {
+  alert(name);
+}
+
+Singleton.getInstance = function (name) {
+  if (!this.instance) {
+    this.instance = new Singleton(name);
+  }
+  return this.instance;
+}
+
+or 
+
+var Singleton = function (name) {
+  this.name = name;
+}
+
+Singleton.prototype.getName = function () {
+  alert(this.name);
+}
+
+Singleton.getInstance = (function () {
+  var instance = null;
+  return function (name) {
+    if (!instance) {
+      instance = new Singleton(name);
+    }
+    return instance;
+  }
+})();
+
+透明的单例模式
+
+var createDiv = function (html) {
+
+  if (instance) {
+    return instance;
+  }
+
+  this.html = html;
+  this.init();
+  return instance = this;
+}
+
+createDiv此时的作用：—— 违反了单一职责原则
+1）创建对象和执行初始化init方法
+2）保证只有一个对象
+
+解决方式：用代理实现单例模式
+
+var createDiv = function (html) { —— createDiv 变成一个普通的类
+  this.html = html;
+  this.init();
+}
+
+createDiv.prototype.init = function () {
+  var div = document.createElement('div');
+  div.innerHTML = this.html;
+  document.body.appendChild(div);
+}
+
+引入代理类 proxySingletonCreateDiv
+var proxySingletonCreateDiv = (function () {
+  var instance; —— 把管理单例的模式放到了代理里面
+  return function (html) {
+    if (!instance) {
+      instance = new CreateDiv(html);
+    }
+    return instance;
+  }
+})();
+
+二者组合达到了一个单例模式的效果
+
+JS中的单例模式 —— 全局变量
+
+因为全局变量可能造成命名空间的污染 —— 解决方式：
+
+1）使用命名空间
+2）使用闭包封装私有变量
+
+var user = (function () {
+  var _name = 'sevn', (私有变量)
+      _age = 18; （私有变量）
+  return {
+    getUserInfo: function () {
+      return _name + '-' + _age;
+    }
+  }
+})();
+
+私有变量保存在闭包产生的作用域中，外部访问不到，避免对全局的命令污染
+
+
+惰性单例（***单例模式的重点） ——  在需要的时候才创建对象实例 ， 在合适的时候才创建对象，并且只创建唯一一个
+
+var createLoginLayer = (function () {
+  var div;
+  return function () {
+    if (!div) {
+      div = document.createElement('div');
+      div.innerHTML = 'xxxx';
+      div.style.display = 'none';
+      document.body.appendChild(div);
+    }
+    return div;
+  }
+})();
+
+document.getElementBtId('loginBtn').onclick = function () {
+  var loginLayer = createLoginLayer();
+  loginLayer.style.display = 'block';
+}
+
+通用的惰性单例 —— 把不变的部分分离出来
+
+var getSingle = function (fn) {
+  var result;
+  return function () {
+    return result || (result = fn.apply(this, arguments));
+  }
+}
+
+var createLoginLayer = function () {
+  var div = document.createElement('div');
+  div.innerHTML = 'xxx';
+  div.style.display = 'none';
+  document.body.appendChild(div);
+  return div;
+}
+
+var createSingleLoginLayer = getSingle(createLoginLayer);
+
+document.getElementBtId('loginBtn').onclick = function () {
+  var loginLayer = createSingleLoginLayer();
+  loginLayer.style.display = 'block';
+}
+
+把创建实例对象的职责和管理单例的职责分别放在两个方法中，两个方法独立互补影响，组合起来，实现创建唯一实例对象的功能
+
