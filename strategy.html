@@ -1,0 +1,92 @@
+策略模式
+1、定义：定义一系列算法，把它们一个个封装起来，并且使它们可以相互替换
+2、示例 —— 使用策略模式计算奖金
+
+var calculateBonus = function (performanceLevel, salary) {
+  if (performanceLevel === 'S') {
+    return salary * 4;
+  }
+  if (performanceLevel === 'A') {
+    return salary * 3;
+  }
+  if (performanceLevel === 'B') {
+    return salary * 2；
+  }
+}
+
+缺点：
+1）函数庞大，包含很多 if-else 语句，这些语句需要覆盖所有的逻辑分支
+2）函数缺乏弹性，若新增逻辑，则必须深入函数内部去实现，则违反开放 - 封闭原则
+3）算法复用性差
+
+一个策略模式的组成：
+第一个部分是一组策略类，封装了具体的算法，并负责具体的计算过程
+第二个部分是环境类Context，Context接受客户请求，随后把请求委托给某一个策略类
+（Context中要维持对某个策略对象的引用）
+
+使用策略模式计算奖金：把每种计算规则封装在策略类里面
+var performanceS = function() {}
+performanceS.prototype.calculate = function (salary) {
+  return salary * 4;
+}
+
+var performanceA = function() {}
+performanceA.prototype.calculate = function (salary) {
+  return salary * 3;
+}
+
+var performanceB = function() {}
+performanceB.prototype.calculate = function (salary) {
+  return salary * 2;
+}
+
+定义奖金类Bonus
+var Bonus = function () {
+  this.salary = null;
+  this.stratery = null; //绩效等级对象的策略对象
+}
+
+Bonus.prototype.setSalary = function (salary) {
+  this.salary = salary;
+}
+
+Bonus.prototype.setStratery = function (stratery) {
+  this.stratery = stratery
+}
+
+Bonus.prototype.getBonus = function () {
+  return tyhis.stratery.calculate(this.salary);
+}
+
+(****)策略模式思想：定义一系列算法，把它们一个个封装起来，并且使它们可以相互替换
+—— 定义一系列的算法，把它们各自封装成策略类，算法被封装在策略类内部的方法里。
+—— 在客户对Context 发起请求的时候，Context 总是把请求委托给这些策略对象中间的某一个进行计算
+
+JS版的策略模式 —— 把 stratery 直接定义为函数
+
+var strategies = {
+  "S": function (salary) {
+    return salary * 4;
+  },
+  "A": function (salary) {
+    return salary * 3;
+  },
+  "B": function (salary) {
+    return salary * 2;
+  }
+}
+
+var calculateBonus = function (level, salary) {
+  return strategies[level](salary);
+}
+
+策略模式的优点：
+1）利用组合、委托、多态等技术和思想，有效避免多重条件选择语句
+2）提供对开发 —— 封闭原则的完美支持，将算法封装在独立的 strategy 中，易于切换、理解、扩展
+3）策略模式中的算法可以复用在系统中的其他地方，避免复制粘贴的重复性工作
+4）利用组合、委托来让 Context 拥有执行算法的能力
+
+缺点：
+1）会在程序中增加许多策略类或者策略对象
+2）了解各个 strategy 之间的不同
+
