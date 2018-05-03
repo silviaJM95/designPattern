@@ -1,0 +1,52 @@
+迭代器模式
+
+1、概念： 迭代器模式是指提供一种方法顺序访问一个聚合对象中的各个元素，同时不需要暴露该对象的内部表示
+
+迭代器模式可以把迭代的过程从业务逻辑中分离出来
+
+使用迭代器模式之后，不需要关心对象的内部构造，按顺序访问其中的每一个元素
+
+2、内部迭代器、外部迭代器
+
+3、迭代类数组对象和字面量对象
+
+####### 只要被迭代的聚合对象有 length 属性而且可以用下标访问，那么就可以被迭代 ############
+
+jQuery中的 $.each函数来封装各种迭代行为：
+
+$.each = function (obj, callback) {
+  var value,
+      i = 0,
+      length = obj.length,
+      isArray = isArraylike(obj);
+
+  if (isArray) { //迭代类数组
+    for (; i < length; i++) {
+      value = callback.call(obj[i], i, obj[i]);
+
+      if (value === false) {
+        break;
+      }
+    }
+  }else {
+    for (i in obj) { //迭代objec对象
+      value = callback.call(obj[i], i, obj[i]);
+      if (value === false) {
+        break;
+      }
+    }
+  }
+  return obj;
+}
+
+迭代器代码：
+
+var iteratorUploadObj = function () {
+  for (var i = 0, fn; fn = arguments[i++]; ) {
+    var uploadObj = fn();
+    if (uploadObj !== false) {
+      return uploadObj;
+    }
+  }
+}
+
