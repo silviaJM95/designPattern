@@ -1,0 +1,188 @@
+发布 —— 订阅者模式
+1、概念：发布 —— 订阅者模式又叫做观察者模式，定义对象之间的一种 “一对多” 的依赖关系
+当一个对象的状态发生改变时，所有依赖于它的对象都将得到通知
+在 JavaScript 中，用 “事件模型” 来代替发布 —— 订阅者模式
+
+发布——订阅者模式，可应用于异步编程，这是一种替代传递回调函数的方案
+发布——订阅者模式，可以取代对象之间硬编程的通知机制
+
+2、自定义事件实现“发布——订阅者”模式：
+首先，要指定好谁充当发布者（比如售楼处）
+然后，给发布者添加一个缓存列表，用于存放回调函数以通知订阅者（售楼处的花名册）
+最后，发布消息的时候，发布者会遍历缓存列表，依次触发里面存放的订阅者回调函数（遍历花名册，挨个发短信）
+
+回调函数可以添加一些参数，订阅者可以接受这些参数
+
+var saleOffices = {} //定义售楼处
+
+saleOffices.clientList = []; //缓存列表，存放订阅者的回调函数
+
+saleOffices.listen = function (fn) { //增加订阅者
+  this.clientList.push(fn); //订阅的消息添加进缓存列表
+}
+
+saleOffices.trigger = function () { //发布消息
+  for (var i = 0, fn; fn = this.clientList[i++];) {
+    fn.apply(this, arguments) //arguments 是发布消息时带上的参数
+  }
+}
+
+3、发布 ——— 订阅者模式的通用实现：把发布 —— 订阅的功能提取出来，放在一个单独的对象内
+
+var event = {
+  clientList: [],
+  listen: function (key, fn) {
+    if (!this.clientList[key, fn]) {
+      this.clientList[key] = [];
+    }
+    this.clientList[key].push(fn) //订阅的消息添加进缓存列表
+  },
+  trigger: function () {
+    var key = Array.prototype.shift.call(arguments),
+        fns = this.clientList[key];
+    if (!fns || fns.length === 0) { //如果没有绑定对应的消息
+      return false;
+    }
+
+    for (var i = 0, fn; fn = fns[i++];) {
+      fn.apply(this, arguments) // arguments是trigger时带上的参数
+    }
+  },
+  remove: function (key, fn) {
+    var fns = this.clientList[key];
+
+    if(!fns) { //如果key对应的消息没有被人订阅，则直接返回
+      return false;
+    }
+    if (!fn) { //如果没有传入具体的回调函数，表示需要取消key对应消息的所有订阅
+      fns && (fns.length = 0)
+    } else {
+      for (var l = fns.length - 1; l >= 0; l--) { //反向遍历订阅的回调函数列表
+        var _fn = fns[l];
+        if (_fn === fn) {
+          fns.splice(l, 1); //删除订阅者的回调函数
+        }
+      }
+    }
+  }
+}
+
+
+再定义一个 installEvent 函数，可以给所有的对象都 “动态安装” 发布————订阅功能
+
+var installEvent = function (obj) {
+  for (var i in event) {
+    obj[i] = event[i];
+  }
+}
+
+4、发布 —— 订阅的示例：网站登录
+
+$.ajax('http://xxx.com?login', function(data) {//登录成功
+  login.trigger('loginSucc', data); //发布登录成功的消息
+})
+
+各模块监听登录成功的消息:
+
+var header = (function() {
+  login.listen('loginSucc', functoin(data) {
+    header.setAvatar(data.avatar);
+  })
+  return {
+    setAvatar: function(data) {
+      console.log('设置header模块的头像')
+    }
+  }
+})()
+
+5、全局的发布———订阅对象
+Event作为一个类似“中介者”的角色，把订阅者和发布者联系起来
+
+var Event = (function() {
+  var clientList = {},
+      listen,
+      trigger,
+      remove;
+
+  listen = function (key, fn) {
+    if (!clientList[key]) {
+      clientList[key] = [];
+    }
+    clientList[key].push(fn);
+  }
+  trigger = function () {
+    var key = Array.prototype.shift.call(arguments),
+        fns = clientList[key];
+    if(!fns || fns.length === 0) {
+      return false;
+    }
+    for (var i = 0, fn; fn = fns[i++];) {
+      fn.apply(this, arguments);
+    }
+  }
+  remove = function (key, fn) {
+    var fns = clientList[key];
+    if (!fns) {
+      retrun false;
+    }
+    if (!fn) {
+      fns && (fns.length = 0);
+    } else {
+      for (var l = fns.length - 1; l >= 0; l--) {
+        var _fn = fns[l];
+        if (_fn === fn) {
+          fns.splice(l, 1);
+        }
+      }
+    }
+  }
+  return {
+    listen: listen,
+    trigger: trigger,
+    remove: remove
+  } 
+})()
+
+Event.listen('xxxxx', function (price) {
+  console.log(xxxxxxx);
+})
+
+Event应用： 全局的Event对象 进行模块之间的通信
+
+/**************** 必须先订阅再发布吗？？ *************************/
+
+答案是：不
+
+在一些情况下，可以先将信息保存起来，等到有对象来订阅的时候再重新把消息发布给订阅者
+
+先发布后订阅 ————> 为了满足这个需求，先建立一个存放离线事件的堆栈，
+当事件发布的时候，如果此时还没有订阅者来订阅这个事件，则暂时把发布事件的动作包裹在一个函数里，这些包装函数将被存入堆栈中
+等到有对象来订阅此事件的时候，将遍历堆栈并且依次执行这些包装函数，即重新发布里面的事件
+
+离线事件的生命周期只有一次
+
+6、全局事件的命名冲突
+
+全局的 发布 —— 订阅 对象里只有一个 clientList 来存放消息名和回调函数
+
+解决全局事件的命名冲突，使用Event提供创建命名空间的功能
+
+/********************先发布后订阅***************************/
+Event.trigger('click', 1);
+
+Event.trigger('click', function(a) {
+  console.log(输出a); //输出1
+})
+
+/******************使用命名空间******************************/
+Event.create('namespace1').listen('click', function(a) {
+  consloe.log(a); //输出1
+})
+
+Event.create('namespace1').trigger('click', 1)
+
+7、优点：
+1）时间上的解耦
+2）对象之间的解耦
+
+可以应用在异步编程中
