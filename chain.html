@@ -1,0 +1,106 @@
+职责链模式
+
+1、定义：使多个对象都有机会处理请求，从而避免请求的发送者和接受者之间的耦合关系，将这些对象连成一条链
+并沿着这条链传递该请求，知道有一个对象处理它为止
+
+一系列可能会处理请求的兑现被连接成一条链，请求在这些对象之间依次传递，知道遇到一个可以处理它的对象，这些对象称为链中的节点
+
+2、生活中的职责链模式
+公家车上传递票钱、考试传递小抄
+
+3、用职责链模式重构代码
+把500元订单、200元订单以及普通购买分成3个函数
+
+//500元订单
+
+var order500 = function (orderType, pay,stock) {
+  if (orderType === 1 && pay === true) {
+    console.log('500元定金预购，得到100元优惠券')
+  } else {
+    order200(orderType, pay, stock); //将请求传递给200元订单
+  }
+}
+
+//200元订单
+
+var order200 = function(orderType, pay, stock) {
+  if (orderType === 2 && pay === true) {
+    console.log('200元定金预约，得到50元优惠券')
+  } else {
+    orderNormal(orderType, pay, stock); //将请求传递给普通订单
+  }
+}
+
+//普通购买订单
+
+var orderNormal = function (orderType, pay, stock) {
+  if (stock > 0) {
+    console.log('普通购买，无优惠券')
+  } else {
+    console.log('手头库存不足')
+  }
+}
+
+在链条传递中的顺序非常僵硬，传递请求的代码被耦合在业务函数中
+
+4、灵活可拆分的职责链节点
+
+首先，改写一下分别表示3种购买模式的节点函数，我们约定，如果某个节点不能处理请求，则返回一个特定的字符串“nextSuccessor”
+表示请求需要继续向后面传递
+
+var order500 = function (orderType, pay, stock) {
+  if (orderType === 1 && pay === true) {
+    console.log('500元定金预约，得到100元优惠券')
+  } else {
+    return 'nextSuccessor' //不知道下一个节点是谁，总之把请求向后传递
+  }
+}
+
+……
+接下来，把nextSuccessor函数包装进职责链节点
+
+定义一个函数Chain,在 new Chain 的时候传递的参数即为需要被包装的函数，同时它有一个实例属性 this.successor，表示在链中的下一个节点
+
+Chain的prototype中还有两个函数
+Chain.prototype.setNextSuccessor  指定在链中的下一个节点
+Chain.prototype.passRequest  传递请求给某个节点
+
+var Chain = function (fn) {
+  this.fn = fn;
+  this.successor = null;
+}
+
+Chain.prototype.setNextSuccessor = function(successor) {
+  return this.successor = successor;
+}
+
+Chain.prototype.passRequest = function() {
+  var ret = this.fn.apply(this, arguments);
+  if (ret === 'nextSuccessor') {
+    return this.successor && this.successor.passRequest.apply(this.successor, arguments)
+  }
+  return ret;
+}
+
+异步的职责链：在Chain类再增加一个原型方法Chain.prototype.next，表示手动传递请求给职责链中的下一个节点
+
+5、职责链模式的优缺点
+
+最大的优点：解耦了请求发送者和N个接受者之间的复杂关系
+
+其次，使用了职责链模式之后，链中的节点可以灵活地进行拆分重组
+
+还有，可以手动的指定起始节点，请求并不是一定要从链中的第一个节点开始传递
+
+6、用 AOP 实现职责链
+function.prototype.after = function (fn) {
+  var self = this;
+  return function() {
+    var ret = self.apply(this, arguments);
+    if (ret === 'nextSuccessor') {
+      return fn.apply(this, arguments);
+    }
+    return ret;
+  }
+}
+
