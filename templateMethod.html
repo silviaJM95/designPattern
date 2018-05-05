@@ -1,0 +1,97 @@
+模板方法模式
+
+1、定义：
+模板方法模式是一种只需要使用继承就可以实现的非常简单的模式
+
+2、组成：
+模板方法模式由两部分组成，第一部分是抽象父类 + 第二部分是具体的实现子类
+
+在抽象父类中封装子类的算法框架，包括实现一些公共方法以及封装子类中所有方法的实现顺序
+子类通过继承这个抽象类，继承了整个算法结构，且可以选择重写父类的方法
+
+3、模板方法模式改写 Coffee or Tea
+
+1)创建一个抽象父类表示泡一杯饮料的整个过程
+
+var Beverage = function() {}
+
+Beverage.prototype.boilWater = function() {
+  console.log('把水煮沸')
+}
+
+Beverage.prototype.brew = function() {} //空方法，由子类重写
+
+Beverage.prototype.pourInCup = function() {} //空方法，由子类重写
+
+Beverage.prototype.addCondiments = function() {} //空方法，由子类重写
+
+Beverage.prototype.init = function() {
+  this.boilWater();
+  this.brew();
+  this.pourInCup();
+  this.addCondiments();
+}
+
+2)创建Coffee子类和Tea子类
+
+var Coffee = function() {}
+
+Coffee.prototype = new Beverage();
+
+重写父类方法
+Coffee.prototype.brew = function() {
+  console.log('用沸水泡咖啡')
+}
+
+Coffee.prototype.pourInCup = function() {
+  console.log('把咖啡倒进杯子')
+}
+
+Coffee.prototype.addCondiments = function() {
+  console.log('加糖和牛奶')
+}
+
+var Coffee = new Coffee();
+Coffee.init();
+
+var Tea = function() {}
+
+Tea.prototype = new Beverage();
+
+重写父类方法
+Tea.prototype.brew = function() {
+  console.log('用沸水泡咖啡')
+}
+
+Tea.prototype.pourInCup = function() {
+  console.log('把咖啡倒进杯子')
+}
+
+Tea.prototype.addCondiments = function() {
+  console.log('加糖和牛奶')
+}
+
+var Tea = new Tea();
+Tea.init();
+
+4、模板方法模式是一种严格依赖抽象类的设计模式，抽象方法被声明在抽象类中，抽象方法没有具体的实现过程，是一些“哑”方法。当子类继承抽象类时，必须重写父类的抽象方法
+除了抽象方法之外，如果每个子类中都有一些同样的具体实现方法，则这些方法可以选择放在抽象类中，可以节省代码已达到复用效果，这些方法叫做具体方法
+
+5、JavaScript中没有抽象类的缺点和解决方案
+ 1）用鸭子类型来模拟接口检查
+ 2）让Beverage.prototype.brew方法直接抛出异常
+
+ 6、钩子方法（hook）
+ 放置钩子是隔离变化的一种常见手段。在父类中容易变化的地方放置钩子，钩子可以有一个默认的实现，究竟要不要挂钩，由子类自行决定
+
+钩子方法的返回结果决定了模板方法后面部分的执行步骤
+
+6、好莱坞原则
+模板方法模式是好莱坞原则的典型使用场景，意味着子类放弃了对自己的控制权，而是改为父类通知子类，哪些方法应该什么时候被调用。作为子类，只负责提供一些设计上的细节
+
+好莱坞原则还适用于：发布——订阅者模式，回调函数
+
+7、模板方法模式是基于继承的一种设计模式，父类封装了子类的算法框架和方法的执行顺序，子类继承父类之后，父类通知子类执行这些方法
+好莱坞原则很好的诠释了 “高层组件调用底层组件” 的设计技巧
+
+

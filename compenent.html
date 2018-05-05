@@ -1,0 +1,130 @@
+组合模式
+1、概念：用小的子对象来构建更大的对象，小的子对象也许是由更小的“孙对象”构成的
+
+2、组合模式的用途
+组合模式将对象组合成树形结构，表示 “部分——整体” 的层次结构；同时，通过对象的多态性表现，使得用户对单个对象和组合对象的使用具有一致性
+
+请求在树中传递的过程：
+如果子节点是叶对象，叶对象自身会处理这个请求；如果子节点是组合对象，请求会继续往下传递
+
+3、组合模式就是更强大的宏命令
+
+基本对象可以被组合成更复杂的组合对象，组合对象又可以被组合，最后整棵树结构可以支持任意多的复杂度，在树被构造完成之后，只需调用最上层对象的 execute 方法
+
+每当对最上层对象进行一次请求，实际上是在对整个树进行 “深度优先” 搜索
+
+4、透明性带来的安全问题
+
+组合对象可以拥有子节点，叶对象下面就没有子节点 ————> 解决方案：给叶对象添加 add 方法，在调用方法时抛出异常，及时提醒客户
+
+var MacroCommand = function() {
+  return {
+    commandsList: [],
+    add: function(command) {
+      this.commandsList.push(command);
+    },
+    execute: function() {
+      for(var i = 0, command; command = this.commandsList[i++];) {
+        command.execute();
+      }
+    }
+  }
+}
+
+var openTVCommand = {
+  execute: function() {
+    console.log('打开电视')
+  },
+  add: function() {
+    throw new Error('叶对象不能添加子节点')
+  }
+}
+
+var macroCommand = MacroComamnd();
+
+macroCommand.add(openTVCommand);
+openTVCommand.add(macroCommand); //Uncaught Error： 叶节点不能添加子节点
+
+
+5、组合模式的例子 ———— 扫描文件夹
+
+场景：把移动硬盘中的资料复制到 F 盘中
+
+首先分别定义好文件夹Folder和文件File两个类
+/************************Floder********************************/
+var Folder = function(name) {
+  this.name = name;
+  this.files = [];
+}
+
+Folder.prototype.add = function(file) {
+  this.files.push(file);
+}
+
+Folder.prototype.scan = function() {
+  console.log('开始扫描文件夹：' + this.name)
+  for (var i = 0, file, files = this.files; file = files[i+1];) {
+    file.scan();
+  }
+}
+
+/**********************File*************************************/
+var File = function(name) {
+  this.name = name;
+}
+
+File.prototype.add = function() {
+  throw new Error('文件下面不能再添加文件')
+}
+
+File.prototype.scan = function() {
+  console.log('开始扫描文件：' + this.name);
+}
+
+接下来创建一些文件和文件夹对象，形成一棵树，就是 F 盘里现有文件目录结构
+
+var folder = new Folder('学习资料');
+var folder1 = new Folder('JavaScript');
+var folder2 = new Folder('jquery');
+
+var file1 = new File('JavaScript 设计模式');
+var file2 = new File('精通jquery');
+var file3 = new File('重构与模式')
+
+folder1.add(file1);
+folder2.add(file2);
+
+folder.add(folder1);
+folder.add(folder2);
+folder.add(file3);
+
+新创建一些文件和文件夹
+var folder3 = new Folder('Node.js');
+var file4 = new File('深入浅出node.js');
+folder3.add(file4);
+
+var file5 = new File(xxxxxxxxxxx);
+
+把文件添加到原有树中：
+folder.add(folderr3);
+folder.add(file5);
+
+扫描整个文件夹，只需要操作树的最顶端对象 folder.scan()
+
+
+6、组合模式使用的注意点！！！
+
+1）组合模式不是父子关系
+组合模式是一种HSA-A聚合关系，不是IS-A，它们能够合作的关键是拥有相同的接口
+
+2）对叶对象操作的一致性
+
+3）双向映射关系
+
+4）用职责链模式提高组合模式性能
+
+7、组合模式的使用场景
+
+1）表示对象的部分 —— 整体层次结构
+2）客户希望同意对待树中的所有对象
+
